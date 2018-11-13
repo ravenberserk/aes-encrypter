@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: AES-Encrypter
+
+encryption:
+  pass: MySuperSecretKey
