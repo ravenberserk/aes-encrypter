@@ -30,12 +30,13 @@ public class EncrypterController {
     @PostMapping("/encrypt")
     public ResponseEntity<String> encrypt(@RequestBody @NotEmpty String strToEncrypt) {
         return ResponseEntity.ok(aesEncypter.encrypt(strToEncrypt,
-                EncrypterConfig.config().encrypterPass(encryptationPass).build()));
+                EncrypterConfig.config().encrypterPass(encryptationPass).salt(8).pepper(8).build()));
     }
 
     @PostMapping("/decrypt")
     public ResponseEntity<String> decrypter(@RequestBody @NotEmpty String strEncrypted) {
-        return ResponseEntity.ok(aesEncypter.decrypt(strEncrypted, EncrypterConfig.config().encrypterPass(encryptationPass).build()));
+        return ResponseEntity.ok(aesEncypter.decrypt(strEncrypted,
+                EncrypterConfig.config().encrypterPass(encryptationPass).salt(8).pepper(8).build()));
     }
 
 }
