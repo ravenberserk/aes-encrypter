@@ -8,6 +8,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -16,46 +17,65 @@ import java.util.Base64;
 
 /**
  * <p>
- * Encrypt/Decrypt example.
+ * This class would be responsible for encrypting/decryption of a string.
  * </p>
+ *
+ * @author jgrande
+ * @since 1.0
  */
 @Component("aesEncrypter")
 public class AESEncrypter {
 
     /**
-     * Encrypt algorithm used.
+     * <p>
+     * Auxiliar method that will encrypt a string.
+     * </p>
+     *
+     * @param strToEncrypt String you want to encrypt
+     * @param config       Cipher configuration.
+     * @return Encrypted string.
      */
-    private static final String ALGORITHM = "AES/CFB/PKCS5Padding";
+    public String encrypt(String strToEncrypt, EncrypterConfig config) {
+        byte[] result;
+        try {
+            // Init the cipher class and encrypt the string.
+            Cipher cipher = initEncrypterCipher(config, Cipher.ENCRYPT_MODE);
+            byte[] encrypted = cipher.doFinal(strToEncrypt.getBytes());
 
-    /**
-     * Secret key used to encrypt and decrypt.
-     */
-    private static final String SECRET_KEY = "MySuperSecretKey";
+            // Generate the random salt and pepper, and get iv array from the cipher object.
+            byte[] salt = generateRandomByteArray(config.getSalt());
+            byte[] pepper = generateRandomByteArray(config.getPepper());
+            byte[] iv = cipher.getIV();
 
-    /**
-     * Length of the IV.
-     */
-    private static final int IV_LENGTH = 16;
+            // Finally, a new array that will contain the encrypted string, iv,
+            // salt and pepper.
+            result = generateCompleteEncrypterArray(encrypted, iv, salt, pepper);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException e) {
+            throw new Error(e);
+        }
 
-    /**
-     * Length of the salt array
-     */
-    private static final int SALT_LENGTH = 16;
+        return Base64.getEncoder().encodeToString(result);
 
-    /**
-     * Length of the pepper array
-     */
-    private static final int PEPPER_LENGTH = 16;
+    }
+
+    private Cipher initEncrypterCipher(EncrypterConfig config, int encryptMode) throws NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException {
+        Cipher cipher = Cipher.getInstance(config.getCipherAlgorithm());
+        cipher.init(Cipher.ENCRYPT_MODE, generateSecretKey(config));
+        return cipher;
+    }
 
     /**
      * <p>
      * Auxiliar method that will generate a secured key.
      * </p>
      *
+     * @param config Cipher configuration.
      * @return Secret key that will use to encrypt/decrypt the string.
      */
-    private static SecretKeySpec generateSecretKey() throws NoSuchAlgorithmException {
-        return new SecretKeySpec(SECRET_KEY.getBytes(), "AES");
+    private SecretKeySpec generateSecretKey(EncrypterConfig config) throws NoSuchAlgorithmException {
+        return new SecretKeySpec(config.getEncrypterPass().getBytes(), "AES");
     }
 
     /**
@@ -66,49 +86,21 @@ public class AESEncrypter {
      *
      * @return A Random {@code byte[]}
      */
-    private static byte[] generateRandomByteArray(int length) {
+    private byte[] generateRandomByteArray(int length) {
         return SecureRandom.getSeed(length);
     }
 
-    /**
-     * <p>
-     * Auxiliar method that will encrypt a string.
-     * </p>
-     *
-     * @return Encrypted string.
-     */
-    public String encrypt(String strToEncrypt) {
-        byte[] result;
-        try {
-            // Generate the random iv and spec.
-            byte[] iv = generateRandomByteArray(IV_LENGTH);
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+    private byte[] generateCompleteEncrypterArray(byte[] encrypted, byte[] iv, byte[] salt, byte[] pepper) {
+        ByteBuffer result = ByteBuffer.allocate(getArrayTotalLength(encrypted, iv, salt, pepper));
+        result.put(salt);
+        result.put(iv);
+        result.put(encrypted);
+        result.put(pepper);
+        return result.array();
+    }
 
-            // Generate the random salt and pepper.
-            byte[] salt = generateRandomByteArray(SALT_LENGTH);
-            byte[] pepper = generateRandomByteArray(PEPPER_LENGTH);
-
-            // Init the cipher class and encrypt the string.
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, generateSecretKey(), ivSpec);
-
-            byte[] encrypted = cipher.doFinal(strToEncrypt.getBytes());
-
-            // Finally, a new array that will contain the encrypted string, iv,
-            // salt and pepper.
-            result = new byte[encrypted.length + IV_LENGTH + SALT_LENGTH + PEPPER_LENGTH];
-            System.arraycopy(salt, 0, result, 0, SALT_LENGTH);
-            System.arraycopy(iv, 0, result, SALT_LENGTH, IV_LENGTH);
-            System.arraycopy(encrypted, 0, result, SALT_LENGTH + IV_LENGTH, encrypted.length);
-            System.arraycopy(pepper, 0, result, SALT_LENGTH + IV_LENGTH + encrypted.length, PEPPER_LENGTH);
-
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
-                | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-            throw new Error(e);
-        }
-
-        return Base64.getEncoder().encodeToString(result);
-
+    private int getArrayTotalLength(byte[] encrypted, byte[] iv, byte[] salt, byte[] pepper) {
+        return encrypted.length + iv.length + salt.length + pepper.length;
     }
 
     /**
@@ -117,32 +109,42 @@ public class AESEncrypter {
      * </p>
      *
      * @param encrypted Encrypted string
+     * @param config    Cipher configuration.
      * @return Plain text encrypted.
      */
-    public String decrypt(String encrypted) {
-        byte[] plainText;
+    public String decrypt(String encrypted, EncrypterConfig config) {
+        byte[] decryptedStr;
         try {
             byte[] encryptedArray = Base64.getDecoder().decode(encrypted);
 
-            // The IV is recovered from the decode encrypted string.
-            byte[] iv = new byte[IV_LENGTH];
-            System.arraycopy(encryptedArray, SALT_LENGTH, iv, 0, IV_LENGTH);
+            Cipher cipher = Cipher.getInstance(config.getCipherAlgorithm());
 
-            // The encrypted data are recovered from the array.
-            byte[] data = new byte[encryptedArray.length - IV_LENGTH - SALT_LENGTH - PEPPER_LENGTH];
-            System.arraycopy(encryptedArray, SALT_LENGTH + IV_LENGTH, data, 0, data.length);
+            byte[] iv = recoveryIv(encryptedArray, config, cipher.getBlockSize());
+            byte[] data = recoveryEncryptedStr(encryptedArray, config, iv);
 
-            // Init the cipher class and decrypt the string.
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, generateSecretKey(), new IvParameterSpec(iv));
-
-            plainText = cipher.doFinal(data);
-
-        } catch (NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException
-                | InvalidKeyException | InvalidAlgorithmParameterException e) {
+            cipher.init(Cipher.DECRYPT_MODE, generateSecretKey(config), new IvParameterSpec(iv));
+            decryptedStr = cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
             throw new Error(e);
         }
-        return new String(plainText);
+        return new String(decryptedStr);
     }
+
+    private byte[] recoveryIv(byte[] encryptedArray, EncrypterConfig config, int ivLength) {
+        byte[] iv = new byte[ivLength];
+        System.arraycopy(encryptedArray, config.getSalt(), iv, 0, ivLength);
+        return iv;
+    }
+
+    private byte[] recoveryEncryptedStr(byte[] encryptedArray, EncrypterConfig config, byte[] iv) {
+        byte[] data = new byte[getEncryptedDataSize(encryptedArray, config, iv)];
+        System.arraycopy(encryptedArray, config.getSalt() + iv.length, data, 0, data.length);
+        return data;
+    }
+
+    private int getEncryptedDataSize(byte[] encryptedArray, EncrypterConfig config, byte[] iv) {
+        return encryptedArray.length - iv.length - config.getSalt() - config.getPepper();
+    }
+
 
 }
