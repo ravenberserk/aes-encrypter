@@ -1,19 +1,18 @@
 package com.example.aesencrypter.utils;
 
-import org.springframework.stereotype.Component;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.springframework.stereotype.Component;
 
 /**
  * <p>
@@ -32,7 +31,7 @@ public class AESEncrypter {
      * </p>
      *
      * @param strToEncrypt String you want to encrypt
-     * @param config       Cipher configuration.
+     * @param config Cipher configuration.
      * @return Encrypted string.
      */
     public String encrypt(String strToEncrypt, EncrypterConfig config) {
@@ -50,8 +49,7 @@ public class AESEncrypter {
             // Finally, a new array that will contain the encrypted string, iv,
             // salt and pepper.
             result = generateCompleteEncrypterArray(encrypted, iv, salt, pepper);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
-                | BadPaddingException e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
             throw new Error(e);
         }
 
@@ -59,8 +57,8 @@ public class AESEncrypter {
 
     }
 
-    private Cipher initEncrypterCipher(EncrypterConfig config, int encryptMode) throws NoSuchPaddingException,
-            NoSuchAlgorithmException, InvalidKeyException {
+    private Cipher initEncrypterCipher(EncrypterConfig config, int encryptMode)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
         Cipher cipher = Cipher.getInstance(config.getCipherAlgorithm());
         cipher.init(Cipher.ENCRYPT_MODE, generateSecretKey(config));
         return cipher;
@@ -80,8 +78,7 @@ public class AESEncrypter {
 
     /**
      * <p>
-     * Auxiliar method that generate a random byte array, used in salt, pepper
-     * and IV.
+     * Auxiliar method that generate a random byte array, used in salt, pepper and IV.
      * </p>
      *
      * @return A Random {@code byte[]}
@@ -109,7 +106,7 @@ public class AESEncrypter {
      * </p>
      *
      * @param encrypted Encrypted string
-     * @param config    Cipher configuration.
+     * @param config Cipher configuration.
      * @return Plain text encrypted.
      */
     public String decrypt(String encrypted, EncrypterConfig config) {

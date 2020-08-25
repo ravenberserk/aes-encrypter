@@ -24,16 +24,16 @@ public final class EncrypterConfig {
      * Encryptation/Desencryptation password used.
      */
     @NonNull
-    private String encrypterPass;
+    private final String encrypterPass;
 
     /**
      * Length of the possible salt byte array.
      */
-    private int salt;
+    private final int salt;
 
     /**
      * Length of the possible pepper byte array.
      */
-    private int pepper;
+    private final int pepper;
 
 }

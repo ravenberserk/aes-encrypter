@@ -3,14 +3,13 @@ package com.example.aesencrypter.controller;
 
 import com.example.aesencrypter.utils.AESEncrypter;
 import com.example.aesencrypter.utils.EncrypterConfig;
+import javax.validation.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.validation.constraints.NotEmpty;
 
 /**
  * Controller en el que se implementaran los endPoints para encriptar/desencriptar la cadena de texto.
