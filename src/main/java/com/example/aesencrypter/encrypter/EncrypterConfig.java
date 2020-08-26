@@ -1,4 +1,4 @@
-package com.example.aesencrypter.utils;
+package com.example.aesencrypter.encrypter;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

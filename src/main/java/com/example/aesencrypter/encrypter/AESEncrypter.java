@@ -1,11 +1,14 @@
-package com.example.aesencrypter.utils;
+package com.example.aesencrypter.encrypter;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Base64;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,8 +37,7 @@ public class AESEncrypter {
      * @param strToEncrypt Cadena a encriptar.
      * @return Cadena encriptada y sal-pimentada en {@code Base64}.
      */
-    @SneakyThrows
-    public String encrypt(String strToEncrypt) {
+    public String encrypt(String strToEncrypt) throws BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = initCipherToEncrypt(config);
 
         byte[] salt = generateRandomByteArray(config.getSalt());
@@ -69,8 +71,8 @@ public class AESEncrypter {
         return SecureRandom.getSeed(length);
     }
 
-    @SneakyThrows
-    private String encrypt(String strToEncrypt, Cipher cipher, byte[] salt, byte[] pepper) {
+    private String encrypt(String strToEncrypt, Cipher cipher, byte[] salt, byte[] pepper)
+            throws BadPaddingException, IllegalBlockSizeException {
         byte[] result = generateEncriptedArray(cipher.doFinal(strToEncrypt.getBytes()), cipher.getIV(), salt, pepper);
         return Base64.getEncoder().encodeToString(result);
     }
@@ -95,8 +97,7 @@ public class AESEncrypter {
      * @param encrypted Cadena en {@code Base64} a desencriptar.
      * @return Cadena desencriptada.
      */
-    @SneakyThrows
-    public String decrypt(String encrypted) {
+    public String decrypt(@NotEmpty String encrypted) throws BadPaddingException, IllegalBlockSizeException {
         byte[] encryptedArray = Base64.getDecoder().decode(encrypted);
 
         Cipher cipher = initCipherToDecrypt(config, encryptedArray);

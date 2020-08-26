@@ -6,6 +6,5 @@ encrypterconfig:
   cipherAlgorithm: 'AES/CFB/PKCS5Padding'
   pass: 'MySuperSecretKey'
   algorithm: 'AES'
-  iv: 16
   salt: 8
   pepper: 8
