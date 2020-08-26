@@ -1,39 +1,39 @@
 package com.example.aesencrypter.utils;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * Cipher configurator.
+ * Configuracion para el encriptado/desencriptado de las cadenas de textos. Se corespondera con los parametros definidos
+ * en el fichero {@code bootstrap.yml}.
  *
  * @author jgrande
  * @since 1.0
  */
 @Getter
-@Builder(builderMethodName = "config")
-public final class EncrypterConfig {
+@Setter
+@ToString
+@NoArgsConstructor
+@Configuration
+@ConfigurationProperties(prefix = "encrypterconfig")
+public class EncrypterConfig {
 
-    /**
-     * Encrypt algorithm used.
-     */
     @NonNull
-    private final String cipherAlgorithm = "AES/CFB/PKCS5Padding";
+    private String cipherAlgorithm;
 
-    /**
-     * Encryptation/Desencryptation password used.
-     */
     @NonNull
-    private final String encrypterPass;
+    private String pass;
 
-    /**
-     * Length of the possible salt byte array.
-     */
-    private final int salt;
+    @NonNull
+    private String algorithm;
 
-    /**
-     * Length of the possible pepper byte array.
-     */
-    private final int pepper;
+    private int iv;
+    private int salt;
+    private int pepper;
 
 }
