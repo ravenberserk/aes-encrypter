@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: AES-Encrypter-Test
+
+encrypterconfig:
+  cipherAlgorithm: 'AES/CFB/PKCS5Padding'
+  pass: 'MyTestsSecretKey'
+  algorithm: 'AES'
+  salt: 16
+  pepper: 8
